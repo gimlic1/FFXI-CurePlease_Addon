@@ -19,16 +19,17 @@ end
 function Run_Buff_Function(id, data)
   for k = 0, 4 do
     local Uid = data:unpack('I', k * 48 + 5)
+    local userIndex = nil -- [2026-11-22 Fix] Was: implicit global userIndex
     if Uid ~= 0 and Uid ~= nil then
       userIndex = Uid
     else
       userIndex = nil
     end
     -- FOR EACH MEMBER REMOVE PREVIOUS CHARACTERS DATA
-    Buffs = {}
-    CharacterName = nil
-    formattedString = nil
-    intIndex = 1
+    local Buffs = {} -- [2026-11-22 Fix] Was: implicit global Buffs = {}
+    local CharacterName = nil -- [2026-11-22 Fix] Was: implicit global CharacterName = nil
+    local formattedString = nil -- [2026-11-22 Fix] Was: implicit global formattedString = nil
+    local intIndex = 1 -- [2026-11-22 Fix] Was: implicit global intIndex = 1
     -- GRAB THE MEMBERS NAME
     if userIndex ~= nil then
       if windower.ffxi.get_mob_by_id(userIndex) ~= nil then
@@ -37,7 +38,7 @@ function Run_Buff_Function(id, data)
     end
     if CharacterName ~= nil then
       for i = 1, 32 do
-        current_buff = data:byte(k * 48 + 5 + 16 + i - 1) + 256 * (math.floor(data:byte(k * 48 + 5 + 8 + math.floor((i - 1) / 4)) / 4 ^ ((i - 1) % 4)) % 4)
+        local current_buff = data:byte(k * 48 + 5 + 16 + i - 1) + 256 * (math.floor(data:byte(k * 48 + 5 + 8 + math.floor((i - 1) / 4)) / 4 ^ ((i - 1) % 4)) % 4) -- [2026-11-22 Fix] Was: implicit global current_buff
         if current_buff ~= 255 and current_buff ~= 0 then
           table.insert(Buffs, current_buff)
         end
@@ -56,8 +57,7 @@ function Run_Buff_Function(id, data)
       CP_connect:settimeout(1)
       assert(CP_connect:sendto(formattedString, ip, port))
       CP_connect:close()
-    else
-      return
+    -- [2026-11-22 Fix] Was: else return (which aborted the for k = 0, 4 loop early when a party slot was empty or out of zone)
     end
   end
 end
@@ -96,8 +96,9 @@ end
 end)
 
 windower.register_event('action', function (data)
-casting = nil
-if data.actor_id == windower.ffxi.get_player().id then
+local casting = nil -- [2026-11-22 Fix] Was: implicit global casting = nil
+local player = windower.ffxi.get_player() -- [2026-11-22 Fix] Guard against nil get_player() while zoning
+if player and data.actor_id == player.id then -- [2026-11-22 Fix] Was: if data.actor_id == windower.ffxi.get_player().id then
   if data.category == 4 then
     casting = 'CUREPLEASE_casting_finished'
   elseif data.category == 8 then
